@@ -73,7 +73,7 @@ pas-mysql   	1       	Fri Aug 16 14:16:32 2019	DEPLOYED	mysql-0.19.0   	5.7.14  
 
 Let's expose a service endpoint to access the MySQL instance. Please make sure you use your correct namespace and mysql name you used above:
 
-```
+``` bash
 $ kubectl expose service -n piv-workshop-1 pas-mysql --type LoadBalancer --port 3306 --target-port 3306 --name pas-mysql-public
 service/pas-mysql-public exposed
 
@@ -96,7 +96,7 @@ replicaset.apps/pas-mysql-7f85d6985b   1         1         1       4m46s
 
 Create a script called "connect-to-mysql.sh" with contents as follows. It is assumed you have "mysql" command line CLI installed and if you do you can use this script as is to connect to the MySQL instance:
 
-```
+``` mysql
 export MYSQL_HOST=$(kubectl get svc pas-mysql-public -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 export MYSQL_ROOT_PASSWORD=$(kubectl get secret --namespace pas pas-mysql -o jsonpath="{.data.mysql-root-password}" | base64 --decode; echo)
 
@@ -109,7 +109,7 @@ mysql -h $MYSQL_HOST -P3306 -u root -p$MYSQL_ROOT_PASSWORD
 
 Run the script to connect to the MySQL instance. Even if you don't have mysql command line client the connect details will be displayed and you can use workbench or some other utility tool to connect to the MySQL database instance:
 
-```
+``` bash
 $ ./connect-to-mysql.sh
 
 mysql -h 10.195.75.155 -P3306 -u root -pnANli13lIG
@@ -143,7 +143,7 @@ mysql>
 
 Create a new database, user and grant privileges as shown below:
 
-```
+``` mysql
 mysql> create database apples;
 Query OK, 1 row affected (0.28 sec)
 
@@ -165,7 +165,7 @@ $ kubectl get svc pas-mysql-public -o jsonpath='{.status.loadBalancer.ingress[0]
 
 Connect to the "apples" database using the new PAS user as shown below. Ensure you use the IP address which was displayed in the previous command and then change to the database "apples":
 
-```
+``` bash
 $ mysql -h 10.195.75.155 -P3306 -u pas -ppas
 mysql: [Warning] Using a password on the command line interface can be insecure.
 Welcome to the MySQL monitor.  Commands end with ; or \g.
@@ -197,7 +197,7 @@ Kubernetes has some really cool features which makes light work of this.
 
 First lets take a look at our services which we have 2. One internal called "pas-mysql" and an external service called "pas-mysql-public" which we used to connect to mysql CLI through. It's the "pas-mysql" service our spring boot application will use:
 
-```
+``` bash
 $ kubectl get svc
 NAME               TYPE           CLUSTER-IP      EXTERNAL-IP                 PORT(S)          AGE
 pas-mysql          ClusterIP      10.100.200.49   <none>                      3306/TCP         30m
@@ -208,7 +208,7 @@ pas-mysql-public   LoadBalancer   10.100.200.16   10.195.75.155,100.64.96.7   33
 
 So lets create a ConfigMap which has the internal service name we want to use and the database name using "kubectl create configmap mysql-config --from-literal=mysql.service.name=pas-mysql --from-literal=mysql.db.name=apples":
 
-```
+``` bash
 $ kubectl create configmap mysql-config --from-literal=mysql.service.name=pas-mysql --from-literal=mysql.db.name=apples
 configmap/mysql-config created
 $ kubectl get cm mysql-config -o json
@@ -234,7 +234,7 @@ $ kubectl get cm mysql-config -o json
 
 Storing the username and password in a ConfigMap IS NOT a good idea. So with kubernetes we can use a "Secret" which we do using a command as follows "kubectl create secret generic db-security --from-literal=mysql_username=pas --from-literal=mysql_password=pas":
 
-```
+``` bash
 $ kubectl create secret generic db-security --from-literal=mysql_username=pas --from-literal=mysql_password=pas
 secret/db-security created
 $ kubectl get secret db-security -o json
@@ -261,7 +261,7 @@ $ kubectl get secret db-security -o json
 
 So our "application.properties" for our Customer API is going to now look like this. We will discuss further how this is actually translated and how / where do we define those $ENV variables. So for now create a file called "application.properties" with the exact same content as below:
 
-```
+``` properties
 spring.jpa.hibernate.ddl-auto=create
 spring.jpa.hibernate.use-new-id-generator-mappings=false
 spring.jpa.show-sql=true
@@ -276,7 +276,7 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
 As you may have guessed we will load that properties file into a ConfigMap using a command "kubectl create configmap app-config --from-file=application.properties":
 
-```
+``` bash
 $ kubectl create configmap app-config --from-file=application.properties
 configmap/app-config created
 papicella@papicella:~/pivotal/PCF/APJ/Workshops-SIMONA/kubernetes$ kubectl get cm app-config -o json
@@ -371,7 +371,7 @@ spec:
 
 Now lets deploy the new Customer API which will connect to our MySQL instance through the clever use of Spring Cloud and Kubernetes ConfigMap and Secret files. To do that run a command as follows "kubectl create -f customer-api-deployment-MYSQL.yaml":
 
-```
+``` bash
 $ kubectl create -f customer-api-deployment-MYSQL.yaml
 deployment.extensions/customer-api-mysql created
 service/customer-api-mysql-service created
@@ -399,7 +399,7 @@ replicaset.apps/pas-mysql-7f85d6985b            1         1         1       59m
 
 Now lets get the external LB IP using a command as follows:
 
-```
+``` bash
 $ kubectl get svc customer-api-mysql-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 10.195.75.156
 ```
@@ -408,7 +408,7 @@ $ kubectl get svc customer-api-mysql-service -o jsonpath='{.status.loadBalancer.
 
 Using the IP address above invoke a HTTP GET call as follows:
 
-```
+``` http request
 $ http http://10.195.75.156/customers/1
 HTTP/1.1 200
 Content-Type: application/hal+json;charset=UTF-8
@@ -439,7 +439,7 @@ You can also invoke the swagger UI html page using the same IP LB address with a
 
 You can also connect to the MySQL instance using "mysql" and verify you have database records for the customer data as shown below
 
-```
+``` mysql
 mysql> use apples;
 Reading table information for completion of table and column names
 You can turn off this feature to get a quicker startup with -A
@@ -470,7 +470,7 @@ mysql> select * from customer;
 
 In the "resources" folder there is  a file called "bootstrap.properties" with content as follows. One thing you will notice is we are referring to our ConfigMap "app-config" here which we created above
 
-```
+``` properties
 spring.application.name=apifirst-customers
 spring.cloud.kubernetes.config.name=app-config
 spring.cloud.kubernetes.config.enabled=true
