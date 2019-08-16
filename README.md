@@ -34,7 +34,7 @@ applications:
 
 Connect to the cluster as follows:
 
-```
+``` bash
 $ kubectl config use-context apples
 Switched to context "apples".
 
