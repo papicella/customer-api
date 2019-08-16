@@ -301,7 +301,7 @@ What is Spring Cloud Kubernetes?
 
 The Spring Cloud Kubernetes plug-in implements the integration between Kubernetes and Spring Boot. It provides access to the configuration data of a ConfigMap using the Kubernetes API. It make so easy to integrate Kubernetes ConfigMap directly with the Spring Boot externalized configuration mechanism, so that Kubernetes ConfigMaps behave as an alternative property source for Spring Boot configuration:
 
-If you have followed this step by step using the same ConfigMap and Secret names then you can use an already loaded image as follows on DockerHub
+If you have followed this step by step using the same ConfigMap and Secret names then you can use an already loaded OCI image as follows on DockerHub which will be our Spring Boot API using Spring Cloud Kubernetes
 
 * pasapples/customer-api-mysql
 
@@ -436,6 +436,49 @@ You can also invoke the swagger UI html page using the same IP LB address with a
 * http://10.195.75.156/swagger-ui.html
 
 ![alt tag](https://i.ibb.co/3S2fKjz/swagger-ui-k8s-workshop.png)
+
+You can also connect to the MySQL instance using "mysql" and verify you have database records for the customer data as shown below
+
+```
+mysql> use apples;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> show tables;
++------------------+
+| Tables_in_apples |
++------------------+
+| customer         |
+| test             |
++------------------+
+2 rows in set (0.23 sec)
+
+mysql> select * from customer;
++----+-------+----------+
+| id | name  | status   |
++----+-------+----------+
+|  1 | pas   | active   |
+|  2 | lucia | active   |
+|  3 | lucas | inactive |
+|  4 | siena | inactive |
++----+-------+----------+
+4 rows in set (0.23 sec)
+```
+
+#### And finally
+
+In the "resources" folder there is  a file called "bootstrap.properties" with content as follows. One thing you will notice is we are referring to our ConfigMap "app-config" here which we created above
+
+```
+spring.application.name=apifirst-customers
+spring.cloud.kubernetes.config.name=app-config
+spring.cloud.kubernetes.config.enabled=true
+```
+
+For more Information on how Spring Boot uses these Spring Cloud Kubernetes property see the docs link below
+
+https://cloud.spring.io/spring-cloud-kubernetes/spring-cloud-kubernetes.html
 
 <hr />
 
