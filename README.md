@@ -50,7 +50,7 @@ $ helm install --name pas-mysql stable/mysql
 
 Verify MySQL up and running after about 1 - 2 minutes:
 
-```
+``` bash
 $ kubectl get all --namespace=piv-workshop-1
 NAME                             READY   STATUS    RESTARTS   AGE
 pod/pas-mysql-7f85d6985b-2xrgz   1/1     Running   0          2m2s
