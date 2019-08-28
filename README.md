@@ -38,7 +38,7 @@ Connect to the cluster as follows:
 $ kubectl config use-context apples
 Switched to context "apples".
 
-$ kubectl config set-context --current --namespace=piv-workshop-1
+$ kubectl config set-context --current --namespace=default
 Context "apples" modified.
 ```
 
@@ -51,7 +51,7 @@ $ helm install --name pas-mysql stable/mysql
 Verify MySQL up and running after about 1 - 2 minutes:
 
 ``` bash
-$ kubectl get all --namespace=piv-workshop-1
+$ kubectl get all 
 NAME                             READY   STATUS    RESTARTS   AGE
 pod/pas-mysql-7f85d6985b-2xrgz   1/1     Running   0          2m2s
 
@@ -74,7 +74,7 @@ pas-mysql   	1       	Fri Aug 16 14:16:32 2019	DEPLOYED	mysql-0.19.0   	5.7.14  
 Let's expose a service endpoint to access the MySQL instance. Please make sure you use your correct namespace and mysql name you used above:
 
 ``` bash
-$ kubectl expose service -n piv-workshop-1 pas-mysql --type LoadBalancer --port 3306 --target-port 3306 --name pas-mysql-public
+$ kubectl expose service pas-mysql --type LoadBalancer --port 3306 --target-port 3306 --name pas-mysql-public
 service/pas-mysql-public exposed
 
 $ kubectl get all
@@ -98,7 +98,7 @@ Create a script called "connect-to-mysql.sh" with contents as follows. It is ass
 
 ``` mysql
 export MYSQL_HOST=$(kubectl get svc pas-mysql-public -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-export MYSQL_ROOT_PASSWORD=$(kubectl get secret --namespace pas pas-mysql -o jsonpath="{.data.mysql-root-password}" | base64 --decode; echo)
+export MYSQL_ROOT_PASSWORD=$(kubectl get secret pas-mysql -o jsonpath="{.data.mysql-root-password}" | base64 --decode; echo)
 
 echo ""
 echo "mysql -h $MYSQL_HOST -P3306 -u root -p$MYSQL_ROOT_PASSWORD"
